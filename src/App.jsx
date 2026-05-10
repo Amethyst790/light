@@ -5,6 +5,8 @@ import confetti from "canvas-confetti";
 // ── constants ─────────────────────────────────────────────────────────────────
 const CHESS_USER = "not_kxk";
 const AMONG_USER = "ethicalcab#0562";
+const PROFILE_IMG = "https://i.imgur.com/C5zsT7L.jpeg"; // Replace with actual URL
+
 const FACTS = [
   "16 years young. India-bred. Internet-raised. 🇮🇳",
   "Professional stalker (the internet kind, relax) 👀",
@@ -13,12 +15,13 @@ const FACTS = [
   "Lo-fi music running 24/7 in my headphones 🎵",
   "Discord is basically my second home 💬",
 ];
+
 const HOBBIES = [
-  { label: "Chess", icon: "♟️", glow: "#00a86b", desc: "Strategist on the board. Every move is a trap." },
-  { label: "Music", icon: "🎵", glow: "#a855f7", desc: "Lo-fi, beats, whatever hits. Always on shuffle." },
-  { label: "Gaming", icon: "🎮", glow: "#ef4444", desc: "Among Us loyalist. Report me if you dare." },
-  { label: "Stalking", icon: "👀", glow: "#06b6d4", desc: "I know your last online. It's a gift, really." },
-  { label: "Discord", icon: "💬", glow: "#5865F2", desc: "Always in a server. Never truly offline." },
+  { label: "Chess",    icon: "♟️", glow: "#C9A84C", desc: "Strategist on the board. Every move is a trap." },
+  { label: "Music",    icon: "🎵", glow: "#4FC3C8", desc: "Lo-fi, beats, whatever hits. Always on shuffle." },
+  { label: "Gaming",   icon: "🎮", glow: "#ef4444", desc: "Among Us loyalist. Report me if you dare." },
+  { label: "Stalking", icon: "👀", glow: "#FFD580", desc: "I know your last online. It's a gift, really." },
+  { label: "Discord",  icon: "💬", glow: "#5865F2", desc: "Always in a server. Never truly offline." },
 ];
 
 // ── SVG brand logos ────────────────────────────────────────────────────────────
@@ -87,8 +90,6 @@ function AmongUsLogo() {
 
 // ── Custom Cursor ─────────────────────────────────────────────────────────────
 function Cursor() {
-  const cursorRef = useRef(null);
-  const trailRef = useRef([]);
   const [hovering, setHovering] = useState(false);
   const pos = useRef({ x: -100, y: -100 });
   const trail = useRef([]);
@@ -116,37 +117,58 @@ function Cursor() {
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // trail
+      // Trail — gold core fading to teal
       for (let i = 0; i < trail.current.length; i++) {
         trail.current[i].age++;
         const t = i / trail.current.length;
         const alpha = t * (1 - trail.current[i].age / 60);
         if (alpha <= 0) continue;
-        const r = t * (hovering ? 8 : 5);
-        const grad = ctx.createRadialGradient(trail.current[i].x, trail.current[i].y, 0, trail.current[i].x, trail.current[i].y, r * 2);
-        grad.addColorStop(0, `rgba(155, 89, 182, ${alpha})`);
-        grad.addColorStop(1, `rgba(139, 92, 246, 0)`);
+        const r = t * (hovering ? 9 : 5);
+        // interpolate gold → teal
+        const goldR = 201, goldG = 168, goldB = 76;
+        const tealR = 79, tealG = 195, tealB = 200;
+        const cr = Math.round(goldR + (tealR - goldR) * (1 - t));
+        const cg = Math.round(goldG + (tealG - goldG) * (1 - t));
+        const cb = Math.round(goldB + (tealB - goldB) * (1 - t));
+        const grad = ctx.createRadialGradient(trail.current[i].x, trail.current[i].y, 0, trail.current[i].x, trail.current[i].y, r * 2.5);
+        grad.addColorStop(0, `rgba(${cr},${cg},${cb},${alpha})`);
+        grad.addColorStop(1, `rgba(79,195,200,0)`);
         ctx.beginPath();
-        ctx.arc(trail.current[i].x, trail.current[i].y, r * 2, 0, Math.PI * 2);
+        ctx.arc(trail.current[i].x, trail.current[i].y, r * 2.5, 0, Math.PI * 2);
         ctx.fillStyle = grad;
         ctx.fill();
       }
       trail.current = trail.current.filter(p => p.age < 60);
-      // dot
+
+      // Center dot — white with gold halo
       const { x, y } = pos.current;
-      const dotR = hovering ? 10 : 5;
-      const dotGrad = ctx.createRadialGradient(x, y, 0, x, y, dotR * 3);
-      dotGrad.addColorStop(0, "rgba(200,130,255,1)");
-      dotGrad.addColorStop(0.4, "rgba(155,89,182,0.8)");
-      dotGrad.addColorStop(1, "rgba(139,92,246,0)");
+      const dotR = hovering ? 14 : 5;
+
+      // Gold halo ring on hover
+      if (hovering) {
+        ctx.beginPath();
+        ctx.arc(x, y, dotR + 4, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(201,168,76,0.7)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Gold glow
+      const halo = ctx.createRadialGradient(x, y, 0, x, y, dotR * 3);
+      halo.addColorStop(0, "rgba(255,213,128,0.6)");
+      halo.addColorStop(0.5, "rgba(201,168,76,0.3)");
+      halo.addColorStop(1, "rgba(201,168,76,0)");
       ctx.beginPath();
       ctx.arc(x, y, dotR * 3, 0, Math.PI * 2);
-      ctx.fillStyle = dotGrad;
+      ctx.fillStyle = halo;
       ctx.fill();
+
+      // White core dot
       ctx.beginPath();
-      ctx.arc(x, y, dotR * 0.4, 0, Math.PI * 2);
+      ctx.arc(x, y, hovering ? 4 : 2.5, 0, Math.PI * 2);
       ctx.fillStyle = "white";
       ctx.fill();
+
       animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
@@ -168,7 +190,7 @@ function Intro({ onDone }) {
       className="fixed inset-0 z-[99999] flex items-center justify-center bg-[#0a0a0a]"
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.04 }}
+      exit={{ opacity: 0, scale: 1.04, filter: "blur(20px)" }}
       transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
     >
       <motion.div className="text-center">
@@ -176,13 +198,15 @@ function Intro({ onDone }) {
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
-          className="h-px w-48 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto mb-6"
+          className="h-px w-48 mx-auto mb-6"
+          style={{ background: "linear-gradient(to right, transparent, #C9A84C, transparent)" }}
         />
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="font-['Space_Mono'] text-purple-400 tracking-[0.4em] text-xs uppercase"
+          className="font-['Space_Mono'] tracking-[0.4em] text-xs uppercase"
+          style={{ color: "#C9A84C" }}
         >
           entering the void
         </motion.p>
@@ -191,8 +215,11 @@ function Intro({ onDone }) {
           animate={{ width: "100%" }}
           transition={{ delay: 0.7, duration: 1.0, ease: "linear" }}
           onAnimationComplete={onDone}
-          className="h-px bg-gradient-to-r from-purple-600 via-cyan-400 to-purple-600 mt-6 mx-auto"
-          style={{ maxWidth: 192 }}
+          className="h-px mt-6 mx-auto"
+          style={{
+            background: "linear-gradient(to right, #C9A84C, #4FC3C8, #C9A84C)",
+            maxWidth: 192,
+          }}
         />
       </motion.div>
     </motion.div>
@@ -201,23 +228,53 @@ function Intro({ onDone }) {
 
 // ── Floating Particles ────────────────────────────────────────────────────────
 function Particles() {
+  const PALETTE = ["#C9A84C33", "#4FC3C833", "#FFD58022"];
   const particles = Array.from({ length: 30 }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
     y: Math.random() * 100,
-    size: Math.random() * 2 + 0.5,
-    dur: Math.random() * 10 + 8,
-    delay: Math.random() * 5,
+    size: Math.random() * 3 + 1,
+    dur: Math.random() * 12 + 10,
+    delay: Math.random() * 6,
+    color: PALETTE[i % PALETTE.length],
   }));
+  const bokeh = Array.from({ length: 6 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 40 + 20,
+    dur: Math.random() * 20 + 25,
+    delay: Math.random() * 8,
+    opacity: Math.random() * 0.03 + 0.03,
+    color: i % 2 === 0 ? "#C9A84C" : "#4FC3C8",
+  }));
+
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
       {particles.map(p => (
         <motion.div
           key={p.id}
-          className="absolute rounded-full bg-purple-400"
-          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, opacity: 0.4 }}
-          animate={{ y: [0, -40, 0], opacity: [0.2, 0.6, 0.2] }}
+          className="absolute rounded-full"
+          style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, background: p.color }}
+          animate={{ y: [0, -60, 0], x: [0, 20, -10, 0], opacity: [0, 0.8, 0] }}
           transition={{ duration: p.dur, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ))}
+      {bokeh.map(b => (
+        <motion.div
+          key={`bokeh-${b.id}`}
+          className="absolute rounded-full"
+          style={{
+            left: `${b.x}%`,
+            top: `${b.y}%`,
+            width: b.size,
+            height: b.size,
+            background: b.color,
+            opacity: b.opacity,
+            filter: `blur(${b.size * 0.5}px)`,
+          }}
+          animate={{ x: [0, 15, -10, 0], y: [0, -20, 10, 0] }}
+          transition={{ duration: b.dur, delay: b.delay, repeat: Infinity, ease: "easeInOut" }}
         />
       ))}
     </div>
@@ -247,17 +304,17 @@ function Navbar() {
       <div
         className="flex gap-6 px-7 py-3 rounded-full text-sm font-['Space_Mono']"
         style={{
-          background: "rgba(15,15,15,0.55)",
+          background: "rgba(15,12,8,0.6)",
           backdropFilter: "blur(20px)",
-          border: "1px solid rgba(155,89,182,0.2)",
-          boxShadow: "0 4px 32px rgba(155,89,182,0.08)",
+          border: "1px solid rgba(201,168,76,0.2)",
+          boxShadow: "0 4px 32px rgba(201,168,76,0.06)",
         }}
       >
         {nav.map(item => (
           <a
             key={item}
             href={`#${item.toLowerCase()}`}
-            className="text-gray-400 hover:text-purple-400 transition-colors duration-300 tracking-wider text-xs"
+            className="nav-link tracking-wider text-xs"
           >
             {item}
           </a>
@@ -268,6 +325,8 @@ function Navbar() {
 }
 
 // ── Hero ──────────────────────────────────────────────────────────────────────
+const LIGHTY_LETTERS = "LIGHTY".split("");
+
 function Hero() {
   const [factIdx, setFactIdx] = useState(0);
   const [showing, setShowing] = useState(true);
@@ -296,51 +355,68 @@ function Hero() {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden" onMouseMove={handleMouse}>
       <Particles />
-      {/* Orbs */}
+
+      {/* Orbs — amber + teal */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="orb1 absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full"
-          style={{ background: "radial-gradient(circle, #6b21a8cc 0%, #4c1d95aa 40%, transparent 70%)", filter: "blur(60px)" }} />
+          style={{ background: "radial-gradient(circle, #6B4C1Ecc 0%, #3D2A0Eaa 40%, transparent 70%)", filter: "blur(80px)" }} />
         <div className="orb2 absolute top-1/2 -right-40 w-[500px] h-[500px] rounded-full"
-          style={{ background: "radial-gradient(circle, #0e7490cc 0%, #0c4a6eaa 40%, transparent 70%)", filter: "blur(60px)" }} />
+          style={{ background: "radial-gradient(circle, #0A3D40cc 0%, #052527aa 40%, transparent 70%)", filter: "blur(80px)" }} />
         <div className="orb3 absolute -bottom-20 left-1/4 w-[450px] h-[450px] rounded-full"
-          style={{ background: "radial-gradient(circle, #7c3aedaa 0%, #4c1d9588 40%, transparent 70%)", filter: "blur(55px)" }} />
+          style={{ background: "radial-gradient(circle, #4A3510aa 0%, #2A1E0888 40%, transparent 70%)", filter: "blur(70px)" }} />
       </div>
 
-      {/* Profile ring */}
+      {/* Profile ring — spring entrance */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}
+        transition={{ delay: 0.3, type: "spring", stiffness: 60, damping: 12 }}
         className="relative mb-8 z-10"
       >
-        <div className="w-28 h-28 rounded-full flex items-center justify-center text-5xl"
-          style={{
-            background: "rgba(30,10,50,0.6)",
-            border: "2px solid rgba(155,89,182,0.6)",
-            boxShadow: "0 0 30px rgba(155,89,182,0.5), 0 0 60px rgba(155,89,182,0.2), inset 0 0 20px rgba(155,89,182,0.1)",
-          }}>
-          👾
+        <div className="profile-ring-wrapper">
+          <div className="profile-ring-glow" />
+          <div className="profile-ring-track" />
+          <img
+            src={PROFILE_IMG}
+            alt="Lighty"
+            className="profile-img"
+            onError={e => {
+              // Fallback to emoji if image not found
+              e.target.style.display = "none";
+              e.target.parentNode.insertAdjacentHTML("beforeend",
+                '<div style="width:112px;height:112px;border-radius:50%;background:rgba(30,18,5,0.7);display:flex;align-items:center;justify-content:center;font-size:2.8rem">👾</div>'
+              );
+            }}
+          />
         </div>
-        <div className="absolute inset-0 rounded-full" style={{
-          background: "conic-gradient(from 0deg, #9b59b6, #06b6d4, #9b59b6)",
-          padding: 2, borderRadius: "50%", mask: "radial-gradient(farthest-side, transparent calc(100% - 2px), black calc(100% - 2px))",
-        }} />
       </motion.div>
 
-      {/* Name */}
+      {/* LIGHTY — cinematic letter drop */}
       <motion.div
         style={{ rotateX: rotX, rotateY: rotY, perspective: 800, transformStyle: "preserve-3d" }}
         className="z-10"
       >
-        <motion.h1
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
-          className="shimmer-text font-['Bebas_Neue'] text-center leading-none select-none"
-          style={{ fontSize: "clamp(5rem, 18vw, 16rem)", letterSpacing: "-0.02em" }}
+        <h1
+          className="font-['Bebas_Neue'] text-center leading-none select-none flex"
+          style={{ fontSize: "clamp(5rem, 18vw, 16rem)", letterSpacing: "-0.03em" }}
         >
-          LIGHTY
-        </motion.h1>
+          {LIGHTY_LETTERS.map((letter, i) => (
+            <motion.span
+              key={i}
+              className="shimmer-text inline-block"
+              initial={{ opacity: 0, y: 80, rotateX: 20 }}
+              animate={{ opacity: 1, y: 0, rotateX: 0 }}
+              transition={{
+                delay: 0.15 + i * 0.06,
+                type: "spring",
+                stiffness: 90,
+                damping: 14,
+              }}
+            >
+              {letter}
+            </motion.span>
+          ))}
+        </h1>
       </motion.div>
 
       {/* Typewriter facts */}
@@ -361,54 +437,70 @@ function Hero() {
         </AnimatePresence>
       </div>
 
-      {/* Scroll hint */}
+      {/* Scroll hint — glowing beam */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5 }}
         className="absolute bottom-10 flex flex-col items-center gap-2 z-10"
       >
-        <span className="text-gray-600 font-['Space_Mono'] text-xs tracking-widest">SCROLL</span>
+        <span className="font-['Space_Mono'] text-xs tracking-widest" style={{ color: "#C9A84C88" }}>SCROLL</span>
         <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.4 }}
-          className="w-px h-8 bg-gradient-to-b from-purple-500 to-transparent" />
+          className="w-px h-8 rounded-full scroll-beam"
+          style={{ background: "linear-gradient(to bottom, #C9A84C, #4FC3C8)" }}
+        />
       </motion.div>
     </section>
   );
 }
 
 // ── Glassmorphism Card helper ─────────────────────────────────────────────────
-function GlassCard({ children, glowColor = "#9b59b6", className = "", ...props }) {
+function GlassCard({ children, glowColor = "#C9A84C", className = "", tilt = false, ...props }) {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [tiltXY, setTiltXY] = useState({ x: 0, y: 0 });
   const ref = useRef(null);
 
   const handleMouse = (e) => {
     const rect = ref.current.getBoundingClientRect();
-    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setMousePos({ x, y });
+    if (tilt) {
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      setTiltXY({ x: (y - cy) / cy * 8, y: (x - cx) / cx * -8 });
+    }
+  };
+
+  const handleLeave = () => {
+    if (tilt) setTiltXY({ x: 0, y: 0 });
   };
 
   return (
     <motion.div
       ref={ref}
       whileHover={{ y: -8, scale: 1.02 }}
+      animate={tilt ? { rotateX: tiltXY.x, rotateY: tiltXY.y } : {}}
       transition={{ duration: 0.3 }}
       onMouseMove={handleMouse}
+      onMouseLeave={handleLeave}
       className={`relative overflow-hidden rounded-2xl p-6 ${className}`}
       style={{
-        background: "rgba(15, 5, 25, 0.55)",
+        background: "rgba(20, 16, 10, 0.6)",
         backdropFilter: "blur(24px)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
+        transformStyle: tilt ? "preserve-3d" : undefined,
+        perspective: tilt ? 800 : undefined,
       }}
       {...props}
     >
-      {/* Shine follow */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+        className="pointer-events-none absolute inset-0 rounded-2xl"
         style={{
-          background: `radial-gradient(180px at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.04), transparent)`,
+          background: `radial-gradient(180px at ${mousePos.x}px ${mousePos.y}px, rgba(201,168,76,0.05), transparent)`,
         }}
       />
-      {/* Hover glow border */}
       <motion.div
         className="pointer-events-none absolute inset-0 rounded-2xl opacity-0"
         whileHover={{ opacity: 1 }}
@@ -427,36 +519,45 @@ function About() {
         <motion.p
           initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }} transition={{ duration: 0.6 }}
-          className="text-purple-400 font-['Space_Mono'] text-xs tracking-[0.3em] uppercase mb-4"
+          className="font-['Space_Mono'] text-xs uppercase mb-4"
+          style={{ color: "#C9A84C", letterSpacing: "0.5em" }}
         >
           01 — About
         </motion.p>
         <motion.div
-          initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.1 }}
+          initial={{ opacity: 0, y: 60, filter: "blur(8px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7, delay: 0.1 }}
           className="group"
         >
-          <GlassCard glowColor="#9b59b6">
+          <GlassCard glowColor="#C9A84C">
             <div
               className="pointer-events-none absolute inset-0 rounded-2xl"
-              style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(155,89,182,0.08), transparent 60%)" }}
+              style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.07), transparent 60%)" }}
             />
             <h2 className="font-['Bebas_Neue'] text-4xl text-white mb-4 tracking-wide">
               Hey, I'm{" "}
               <span className="shimmer-text">Lighty</span>
             </h2>
-            <p className="text-gray-300 leading-relaxed font-['Syne'] text-base space-y-2">
-              16-year-old from <span className="text-cyan-400 font-semibold">India</span> who lives on the internet and low-key thrives.
+            <p className="leading-relaxed font-['Syne'] text-base" style={{ color: "#E8E8E8" }}>
+              16-year-old from{" "}
+              <span style={{ color: "#4FC3C8" }} className="font-semibold">India</span>{" "}
+              who lives on the internet and low-key thrives.
               You'll catch me plotting on a chessboard, vibing to lo-fi at 2am, or going sus on Among Us when nobody's watching.
             </p>
-            <p className="text-gray-400 leading-relaxed font-['Syne'] text-sm mt-4">
+            <p className="leading-relaxed font-['Syne'] text-sm mt-4 text-gray-400">
               Discord is my HQ. Music is my therapy. Stalking profiles is definitely just a hobby.
               I don't sleep much but I do move in silence — mostly because I'm always in someone's game lobby.
             </p>
             <div className="flex flex-wrap gap-3 mt-6">
               {["India 🇮🇳", "16 yrs", "He/Him", "Night Owl 🌙", "Chess Nerd"].map(tag => (
                 <span key={tag} className="text-xs font-['Space_Mono'] px-3 py-1 rounded-full"
-                  style={{ background: "rgba(155,89,182,0.15)", border: "1px solid rgba(155,89,182,0.3)", color: "#c084fc" }}>
+                  style={{
+                    background: "rgba(201,168,76,0.1)",
+                    border: "1px solid rgba(201,168,76,0.4)",
+                    color: "#C9A84C",
+                  }}>
                   {tag}
                 </span>
               ))}
@@ -476,7 +577,8 @@ function Interests() {
         <motion.p
           initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-purple-400 font-['Space_Mono'] text-xs tracking-[0.3em] uppercase mb-4"
+          className="font-['Space_Mono'] text-xs uppercase mb-4"
+          style={{ color: "#C9A84C", letterSpacing: "0.5em" }}
         >
           02 — Interests
         </motion.p>
@@ -491,13 +593,13 @@ function Interests() {
           {HOBBIES.map((h, i) => (
             <motion.div
               key={h.label}
-              initial={{ opacity: 0, y: 60, rotate: i % 2 === 0 ? -4 : 4 }}
-              whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+              initial={{ opacity: 0, y: 60, filter: "blur(8px)" }}
+              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }}
               className="group"
             >
-              <GlassCard glowColor={h.glow}>
+              <GlassCard glowColor={h.glow} tilt={true}>
                 <span className="text-4xl block mb-3">{h.icon}</span>
                 <h3 className="font-['Syne'] font-bold text-white text-lg mb-1">{h.label}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{h.desc}</p>
@@ -529,19 +631,23 @@ function SocialBtn({ href, logo, label, glowColor, subtext }) {
   return (
     <motion.a
       href={href} target="_blank" rel="noopener noreferrer"
-      initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       whileHover={{ y: -6, scale: 1.03 }}
       onClick={addRipple}
       className="relative overflow-hidden flex items-center gap-4 rounded-2xl px-6 py-4 transition-all duration-300 group"
       style={{
-        background: "rgba(15,5,25,0.55)",
+        background: "rgba(20,16,10,0.55)",
         backdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.07)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
       }}
     >
-      <motion.div whileHover={{ scale: 1.2 }} transition={{ duration: 0.2 }}>
+      <motion.div
+        whileHover={{ rotate: [0, -15, 10, 0] }}
+        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+      >
         {logo}
       </motion.div>
       <div className="flex-1">
@@ -552,10 +658,8 @@ function SocialBtn({ href, logo, label, glowColor, subtext }) {
         className="w-2 h-2 rounded-full opacity-0 group-hover:opacity-100"
         style={{ background: glowColor, boxShadow: `0 0 8px ${glowColor}` }}
       />
-      {/* hover glow border */}
       <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         style={{ boxShadow: `0 0 0 1px ${glowColor}66, 0 0 24px ${glowColor}33` }} />
-      {/* ripples */}
       {ripples.map(r => (
         <motion.div key={r.id} className="pointer-events-none absolute rounded-full"
           style={{ left: r.x - 5, top: r.y - 5, width: 10, height: 10, background: `${glowColor}66` }}
@@ -573,12 +677,17 @@ function Connect() {
   return (
     <section id="connect" className="relative py-24 px-6">
       <div className="max-w-2xl mx-auto">
-        <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="text-purple-400 font-['Space_Mono'] text-xs tracking-[0.3em] uppercase mb-4">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          className="font-['Space_Mono'] text-xs uppercase mb-4"
+          style={{ color: "#C9A84C", letterSpacing: "0.5em" }}
+        >
           03 — Connect
         </motion.p>
-        <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          transition={{ delay: 0.1 }} className="font-['Bebas_Neue'] text-5xl text-white mb-10 tracking-wide">
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          transition={{ delay: 0.1 }} className="font-['Bebas_Neue'] text-5xl text-white mb-10 tracking-wide"
+        >
           Find me online
         </motion.h2>
         <div className="flex flex-col gap-4">
@@ -609,18 +718,26 @@ function Gaming() {
   return (
     <section id="gaming" className="relative py-24 px-6">
       <div className="max-w-2xl mx-auto">
-        <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          className="text-purple-400 font-['Space_Mono'] text-xs tracking-[0.3em] uppercase mb-4">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          className="font-['Space_Mono'] text-xs uppercase mb-4"
+          style={{ color: "#C9A84C", letterSpacing: "0.5em" }}
+        >
           04 — Gaming
         </motion.p>
-        <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          transition={{ delay: 0.1 }} className="font-['Bebas_Neue'] text-5xl text-white mb-10 tracking-wide">
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          transition={{ delay: 0.1 }} className="font-['Bebas_Neue'] text-5xl text-white mb-10 tracking-wide"
+        >
           Find me gaming
         </motion.h2>
         <div className="flex flex-col gap-5">
           {/* Chess */}
-          <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-            transition={{ duration: 0.6 }}>
+          <motion.div
+            initial={{ opacity: 0, x: -40, filter: "blur(8px)" }}
+            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            viewport={{ once: true }} transition={{ duration: 0.6 }}
+          >
             <a href={`https://chess.com/member/${CHESS_USER}`} target="_blank" rel="noopener noreferrer" className="block group">
               <GlassCard glowColor="#81b64c">
                 <div className="flex items-center gap-5">
@@ -646,8 +763,11 @@ function Gaming() {
           </motion.div>
 
           {/* Among Us */}
-          <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}>
+          <motion.div
+            initial={{ opacity: 0, x: 40, filter: "blur(8px)" }}
+            whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}
+          >
             <div className="group relative">
               <GlassCard glowColor="#c0392b">
                 <div className="flex items-center gap-5">
@@ -678,10 +798,8 @@ function Gaming() {
 // ── Speaker ───────────────────────────────────────────────────────────────────
 function Speaker() {
   const [on, setOn] = useState(false);
-  const audioRef = useRef(null);
 
   useEffect(() => {
-    // Generate a simple tone loop using Web Audio API (no external audio file needed)
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const notes = [261.6, 293.7, 329.6, 349.2, 392.0];
     let active = false;
@@ -718,10 +836,10 @@ function Speaker() {
       data-hover="true"
       className={`fixed bottom-6 left-6 z-50 w-11 h-11 rounded-full flex items-center justify-center text-lg transition-all duration-300 ${on ? "speaker-active" : ""}`}
       style={{
-        background: "rgba(20,5,35,0.7)",
+        background: "rgba(20,14,5,0.7)",
         backdropFilter: "blur(20px)",
-        border: `1px solid ${on ? "rgba(155,89,182,0.6)" : "rgba(255,255,255,0.1)"}`,
-        boxShadow: on ? "0 0 16px rgba(155,89,182,0.4)" : "none",
+        border: `1px solid ${on ? "rgba(201,168,76,0.6)" : "rgba(255,255,255,0.1)"}`,
+        boxShadow: on ? "0 0 16px rgba(201,168,76,0.4)" : "none",
       }}
       title={on ? "Mute ambient" : "Play ambient"}
     >
@@ -741,9 +859,9 @@ function Footer() {
     if (n >= 5) {
       setClicks(0);
       setEgg(true);
-      confetti({ particleCount: 200, spread: 100, origin: { y: 0.9 }, colors: ["#9b59b6", "#06b6d4", "#a855f7", "#f0abfc", "#ffffff"] });
-      confetti({ particleCount: 100, angle: 60, spread: 80, origin: { x: 0 }, colors: ["#9b59b6", "#ef4444"] });
-      confetti({ particleCount: 100, angle: 120, spread: 80, origin: { x: 1 }, colors: ["#06b6d4", "#a855f7"] });
+      confetti({ particleCount: 200, spread: 100, origin: { y: 0.9 }, colors: ["#C9A84C", "#4FC3C8", "#FFD580", "#ffffff", "#A07830"] });
+      confetti({ particleCount: 100, angle: 60, spread: 80, origin: { x: 0 }, colors: ["#C9A84C", "#ef4444"] });
+      confetti({ particleCount: 100, angle: 120, spread: 80, origin: { x: 1 }, colors: ["#4FC3C8", "#FFD580"] });
       setTimeout(() => setEgg(false), 3500);
     }
   };
@@ -756,7 +874,10 @@ function Footer() {
           <span
             onClick={handleHeartClick}
             data-hover="true"
-            className="cursor-pointer hover:text-purple-400 transition-colors select-none"
+            className="cursor-pointer transition-colors select-none"
+            style={{ color: "inherit" }}
+            onMouseEnter={e => e.target.style.color = "#C9A84C"}
+            onMouseLeave={e => e.target.style.color = ""}
           >
             made with ❤️
           </span>
@@ -774,7 +895,7 @@ function Footer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[99990] flex items-center justify-center"
-            style={{ background: "rgba(5,0,15,0.92)", backdropFilter: "blur(10px)" }}
+            style={{ background: "rgba(5,3,0,0.92)", backdropFilter: "blur(10px)" }}
           >
             <motion.div
               initial={{ scale: 0.5 }}
@@ -789,7 +910,8 @@ function Footer() {
               <motion.p
                 animate={{ opacity: [1, 0.3, 1] }}
                 transition={{ repeat: Infinity, duration: 0.6 }}
-                className="font-['Space_Mono'] text-purple-400 text-sm mt-4 tracking-widest"
+                className="font-['Space_Mono'] text-sm mt-4 tracking-widest"
+                style={{ color: "#C9A84C" }}
               >
                 only the curious make it this far
               </motion.p>
@@ -810,7 +932,11 @@ export default function App() {
       <Cursor />
       <AnimatePresence>{intro && <Intro onDone={() => setTimeout(() => setIntro(false), 300)} />}</AnimatePresence>
       {!intro && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+        <motion.div
+          initial={{ opacity: 0, filter: "blur(20px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          transition={{ duration: 0.8 }}
+        >
           <Navbar />
           <Hero />
           <About />
